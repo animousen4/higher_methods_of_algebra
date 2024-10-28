@@ -41,7 +41,7 @@ class GaussianMethodWithLeadingElementEquationSolver(
             maxElementPosition = getMaxOfRow(columnListMatrix, n, currentDiagPointer)
             maxValue = columnListMatrix[maxElementPosition.j][maxElementPosition.i]
 
-            if (columnListMatrix[currentDiagPointer][currentDiagPointer] > maxValue) {
+            if (maxElementPosition != ElementPosition(currentDiagPointer, currentDiagPointer)) {
                 val proxyColumn = columnListMatrix[maxElementPosition.j]
                 columnListMatrix[maxElementPosition.j] = columnListMatrix[currentDiagPointer]
                 columnListMatrix[currentDiagPointer] = proxyColumn
@@ -55,10 +55,21 @@ class GaussianMethodWithLeadingElementEquationSolver(
 
             for (toDividePointer in currentDiagPointer..< n) {
                 columnListMatrix[toDividePointer][currentDiagPointer] = columnListMatrix[toDividePointer][currentDiagPointer] / maxValue
-                afterStickValue[toDividePointer] = afterStickValue[toDividePointer] / maxValue
+            }
+            afterStickValue[currentDiagPointer] = afterStickValue[currentDiagPointer] / maxValue
+
+
+            for (kI in currentDiagPointer + 1..< n) {
+                val toMultiply = columnListMatrix[currentDiagPointer][kI]
+                for (kJ in currentDiagPointer..< n) {
+                    columnListMatrix[kJ][kI] = columnListMatrix[kJ][kI] - toMultiply * columnListMatrix[kJ][currentDiagPointer]
+                }
+                afterStickValue[kI] = afterStickValue[kI] - toMultiply * afterStickValue[currentDiagPointer]
             }
 
             multipliedTransformation *= maxValue
+
+
         }
 
         var diagIndex = n - 1
@@ -69,7 +80,7 @@ class GaussianMethodWithLeadingElementEquationSolver(
             var j = diagIndex + 1
             var otherSum = 0.0
             while (j < n) {
-                otherSum += columnListMatrix[j][j] * transformedResultValues[j]
+                otherSum += columnListMatrix[j][diagIndex] * transformedResultValues[j]
                 j++
             }
 
