@@ -18,7 +18,7 @@ class GaussianMethodWithLeadingElementEquationSolver(
         return maxValue
     }
 
-    override fun solve() : Map<Int, Double> {
+    override fun solve() : EquationSolution {
 
 
         val variablePosition: MutableList<Int> = MutableList(n) { index -> index }
@@ -94,7 +94,9 @@ class GaussianMethodWithLeadingElementEquationSolver(
             resultMap[variablePosition[i] + 1] = transformedResultValues[i]
         }
 
-        return resultMap
+        val det = (if (exchangeCount % 2 == 0) 1 else -1) * multipliedTransformation
+
+        return EquationSolution(resultMap, det)
     }
 
 }

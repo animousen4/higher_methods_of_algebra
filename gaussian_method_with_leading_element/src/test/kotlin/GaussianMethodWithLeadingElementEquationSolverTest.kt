@@ -21,11 +21,33 @@ class GaussianMethodWithLeadingElementEquationSolverTest : FunSpec({
 
         val result = gaussianMethodSolver.solve()
 
-        result.shouldHaveSize(3)
+        result.equationSolution.shouldHaveSize(3)
 
-        result[1]!!.shouldBeBetween(3.0, 3.0, tolerance)
-        result[2]!!.shouldBeBetween(5.0, 5.0, tolerance)
-        result[3]!!.shouldBeBetween(4.0, 4.0, tolerance)
+        result.equationSolution[1]!!.shouldBeBetween(3.0, 3.0, tolerance)
+        result.equationSolution[2]!!.shouldBeBetween(5.0, 5.0, tolerance)
+        result.equationSolution[3]!!.shouldBeBetween(4.0, 4.0, tolerance)
 
+        result.determinant.shouldBeBetween(-30.0, -30.0, tolerance)
+    }
+
+    test("Test base example for the correct values dataset 2") {
+        val gaussianMethodSolver = GaussianMethodWithLeadingElementEquationSolver(
+            3,
+            listOf(
+                listOf(8.0, 7.0, 3.0),
+                listOf(-7.0, -4.0, -4.0),
+                listOf(-6.0, 5.0, -4.0)
+            ),
+            listOf(18.0, -11.0, -15.0))
+
+        val result = gaussianMethodSolver.solve()
+
+        result.equationSolution.shouldHaveSize(3)
+
+        result.equationSolution[1]!!.shouldBeBetween(5.0, 5.0, tolerance)
+        result.equationSolution[2]!!.shouldBeBetween(-1.0, -1.0, tolerance)
+        result.equationSolution[3]!!.shouldBeBetween(-5.0, 5.0, tolerance)
+
+        result.determinant.shouldBeBetween(83.0, 83.0, tolerance)
     }
 })
