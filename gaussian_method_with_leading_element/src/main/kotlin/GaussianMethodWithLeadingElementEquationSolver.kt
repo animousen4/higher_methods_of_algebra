@@ -44,6 +44,9 @@ class GaussianMethodWithLeadingElementEquationSolver(
         var maxElementPosition: ElementPosition
 
         for (currentDiagPointer in 0..<n) {
+            if (columnListMatrix[currentDiagPointer][currentDiagPointer] == 0.0) {
+                throw InconsistentSystemException()
+            }
             maxElementPosition = getMaxOfRow(columnListMatrix, n, currentDiagPointer)
             maxValue = columnListMatrix[maxElementPosition.j][maxElementPosition.i]
 

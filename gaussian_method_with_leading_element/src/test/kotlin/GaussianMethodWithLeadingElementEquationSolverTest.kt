@@ -1,3 +1,4 @@
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.doubles.shouldBeBetween
 import io.kotest.matchers.maps.shouldContain
@@ -50,6 +51,23 @@ class GaussianMethodWithLeadingElementEquationSolverTest : FunSpec({
         result.equationSolution[3]!!.shouldBeBetween(-5.0, 5.0, tolerance)
 
         result.determinant.shouldBeBetween(83.0, 83.0, tolerance)
+    }
+
+    test("Test for inconsistent exception") {
+        val gaussianMethodSolver = GaussianMethodWithLeadingElementEquationSolver(
+            4,
+            listOf(
+                listOf(2.0, 3.0, -1.0, 1.0),
+                listOf(8.0, 12.0, -9.0, 8.0),
+                listOf(4.0, 6.0, 3.0, -2.0),
+                listOf(2.0, 3.0, 9.0, -7.0),
+            ),
+            listOf(1.0, 3.0, 3.0, 3.0))
+
+
+        shouldThrow<InconsistentSystemException> {
+            gaussianMethodSolver.solve()
+        }
     }
 
     test("Test with big matrix [the task]") {
