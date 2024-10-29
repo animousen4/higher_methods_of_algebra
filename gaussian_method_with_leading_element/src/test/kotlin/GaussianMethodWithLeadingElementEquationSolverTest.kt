@@ -52,7 +52,7 @@ class GaussianMethodWithLeadingElementEquationSolverTest : FunSpec({
         result.determinant.shouldBeBetween(83.0, 83.0, tolerance)
     }
 
-    test("Test with big matrix") {
+    test("Test with big matrix [the task]") {
         val matrix : List<List<Double>>
         val n = 15
 
@@ -96,6 +96,34 @@ class GaussianMethodWithLeadingElementEquationSolverTest : FunSpec({
 
         val result = gaussianMethodSolver.solve()
 
-        println(result.equationSolution)
+        val detSolution = 772845850543518.4
+        val solutionList = listOf(
+            -1.0259249036759457,
+            0.26921540663741883,
+            0.3337708373017576,
+            0.4190011240209511,
+            0.5021428261646774,
+            0.5854955180082207,
+            0.6688268974290611,
+            0.7521604113771139,
+            0.8354938924757453,
+            0.9188255675413781,
+            1.0021753357864194,
+            1.0853459782703743,
+            1.1702897851857836,
+            1.2376810735477342,
+            1.4788243830128212,
+        )
+
+
+
+        result.equationSolution.shouldHaveSize(n)
+        result.determinant.shouldBeBetween(detSolution, detSolution, tolerance)
+        var i = 1
+        while (i <= n) {
+            result.equationSolution[i]!!.shouldBeBetween(solutionList[i - 1], solutionList[i - 1], tolerance)
+            i++
+        }
+
     }
 })
