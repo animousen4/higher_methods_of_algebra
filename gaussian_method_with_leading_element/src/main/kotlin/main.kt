@@ -63,8 +63,8 @@ fun main(args: Array<String>) {
             print("$column ")
         }
 
-        println()
-        //println(b[bIndex])
+        //println()
+        println("| ${b[bIndex]}")
         bIndex++
     }
     println()
@@ -78,5 +78,6 @@ fun main(args: Array<String>) {
 
     println(result.equationSolution)
     println("Det A = ${result.determinant}")
+
 
 }
