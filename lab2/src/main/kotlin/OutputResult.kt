@@ -1,1 +1,20 @@
-data class OutputResult()
+data class OutputResult(
+    val matrixA: Array<DoubleArray>,
+    val vectorB: DoubleArray,
+    val spectralNormA: Double,
+    val matrixB: Array<DoubleArray>,
+    val msiVectorC: DoubleArray,
+    val msiSpectralNormB: Double,
+    val msiAprioriIterations: Int,
+    val msiRealIterations: Int,
+    val msiResidual: Double,
+    val msiSolution: DoubleArray,
+    val seidelMatrixH: Array<DoubleArray>,
+    val seidelMatrixF: Array<DoubleArray>,
+    val seidelEMinusHReversed: Array<DoubleArray>,
+    val seidelSolution: DoubleArray,
+    val seidelResidual: Double,
+    val minResSolution: DoubleArray,
+    val minResIterationAmount: Int,
+    val minResResidual: Double
+)
