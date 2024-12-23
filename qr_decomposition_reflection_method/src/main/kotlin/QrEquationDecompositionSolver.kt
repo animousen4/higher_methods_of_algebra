@@ -79,7 +79,7 @@ class QrEquationDecompositionSolver(
                 for (k in 0 until A.shape[1]) {
                     sum += A[i, k] * B[k, j]
                 }
-                C[i, j] = String.format("%.4f", sum).toDouble()
+                C[i, j] = sum
             }
         }
         return C
@@ -124,13 +124,13 @@ class QrEquationDecompositionSolver(
 
     private fun getNorm(A: NDArray<Double, D2>, y: NDArray<Double, D2>, f: NDArray<Double, D2>): Double {
         val matr = substractMatrix(multiplyMatrix(A, y), f)
-        var maxi = -Double.MAX_VALUE
+        var max = -Double.MAX_VALUE
         for (i in 0 until matr.shape[0]) {
             for (j in 0 until matr.shape[1]) {
-                maxi = maxOf(maxi, abs(matr[i, j]))
+                max = maxOf(max, abs(matr[i, j]))
             }
         }
-        return maxi
+        return max
     }
 
 }

@@ -12,3 +12,4 @@ rootProject.name = "higher_methods_of_algebra"
 include("gaussian_method_with_leading_element")
 include("qr_decomposition_reflection_method")
 include("lab2")
+include("lab3")

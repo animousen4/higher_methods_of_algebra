@@ -1,0 +1,194 @@
+import org.jetbrains.kotlinx.multik.api.*
+import org.jetbrains.kotlinx.multik.ndarray.data.*
+import kotlin.math.*
+import kotlin.random.Random
+
+fun generateSymmMatrix(n: Int, maxValue: Double = 10.0): D2Array<Double> {
+    val matrix = mk.empty<Double>(n, n)
+    for (i in 0 until n) {
+        for (j in 0 until n) {
+            matrix[i, j] = (Random.nextDouble() * (2 * maxValue) - maxValue).round(2)
+        }
+    }
+    for (i in 0 until n) {
+        for (j in i + 1 until n) {
+            matrix[j, i] = matrix[i, j]
+        }
+    }
+
+    return matrix
+}
+
+// QR alg for eigvals
+fun qrAlg(matrix: D2Array<Double>, b: D2Array<Double>, epsilon: Double = 1e-4): Pair<DoubleArray, Int> {
+    val n = matrix.shape[0]
+    var A = matrix.copy()
+    var iterations = 0
+
+    while (true) {
+        iterations++
+        val (Q, R) = QrEquationDecompositionSolver(A, b, n).solve()
+        val A_next = mk.empty<Double>(n, n)
+
+        for (i in 0 until n) {
+            for (j in 0 until n) {
+                var sum = 0.0
+                for (k in 0 until n) {
+                    sum += R[i, k] * Q[k, j]
+                }
+                A_next[i, j] = sum
+            }
+        }
+
+        var offDiagonalNorm = 0.0
+        for (i in 0 until n) {
+            for (j in 0 until n) {
+                if (i != j) {
+                    offDiagonalNorm += A_next[i, j].pow(2)
+                }
+            }
+        }
+        offDiagonalNorm = sqrt(offDiagonalNorm)
+
+
+        if (offDiagonalNorm < epsilon) {
+            break
+        }
+
+        A = A_next
+    }
+
+    val eigenvalues = DoubleArray(n) { A[it, it] }
+
+    return Pair(eigenvalues, iterations)
+}
+
+fun symmetricTridiagonalization(matrix: D2Array<Double>): D2Array<Double> {
+    val n = matrix.shape[0]
+    val hessenbergMatrix = matrix.copy()
+
+    for (k in 0 until n - 2) {
+        val x = DoubleArray(n - k - 1) { hessenbergMatrix[k + 1 + it, k] }
+        val normX = sqrt(x.sumOf { it * it })
+
+        val u = x.copyOf()
+        u[0] += if (x[0] > 0) -normX else normX
+        val normU = sqrt(u.sumOf { it * it })
+        val uNorm = DoubleArray(u.size) { u[it] / normU }
+
+        val tau = 2 / uNorm.sumOf { it * it }
+
+        for (i in k + 1 until n) {
+            for (j in k + 1 until n) {
+                var v_ij = 0.0
+                for(m in uNorm.indices){
+                    v_ij += uNorm[m] * hessenbergMatrix[k+1+m,j]
+                }
+
+                var v_ji = 0.0
+                for (m in uNorm.indices){
+                    v_ji += uNorm[m]* hessenbergMatrix[i,k+1+m]
+                }
+                hessenbergMatrix[i,j] -= tau * uNorm[i - k - 1] * v_ij
+                if (i != j){
+                    hessenbergMatrix[j,i] -= tau * uNorm[j-k-1]*v_ji
+                }
+
+
+            }
+        }
+        for (i in k + 2 until n) {
+            hessenbergMatrix[i,k] = 0.0
+            hessenbergMatrix[k,i] = 0.0
+        }
+    }
+
+    return hessenbergMatrix
+}
+
+fun characterPolynom(matrix: D2Array<Double>, lambd: Double): Double {
+    val n = matrix.shape[0]
+    val A = mk.empty<Double>(n, n)
+    for(i in 0 until n){
+        for(j in 0 until n){
+            A[i,j] = matrix[i,j] - (if(i ==j) lambd else 0.0)
+        }
+    }
+    fun determinantGauss(matrix: D2Array<Double>): Double {
+        val n = matrix.shape[0]
+        var det = 1.0
+        val matrixCopy = matrix.copy()
+        for (i in 0 until n) {
+            var pivot = i
+            while (pivot < n && abs(matrixCopy[pivot, i]) < 1e-4) {
+                pivot++
+            }
+
+            if (pivot == n) {
+                return 0.0
+            }
+
+            if (pivot != i) {
+                val temp = matrixCopy[i].copy()
+                matrixCopy[i] = matrixCopy[pivot]
+                matrixCopy[pivot] = temp
+                det *= -1.0
+            }
+
+            det *= matrixCopy[i, i]
+
+            for (j in i + 1 until n) {
+                val factor = matrixCopy[j, i] / matrixCopy[i, i]
+                for (k in i until n) {
+                    matrixCopy[j, k] -= factor * matrixCopy[i, k]
+                }
+            }
+        }
+        return det
+    }
+
+    return determinantGauss(A)
+}
+
+
+fun main() {
+    val n = Random.nextInt(10, 16)
+    val A = generateSymmMatrix(n)
+
+    println("Source A:")
+    for (row in A.rows()) {
+        println(row.toList())
+    }
+
+
+    val (eigenvalues, iterations) = qrAlg(A)
+    println("\nQR algorithm iterations amount: $iterations")
+    println("Eigvals:")
+    println(eigenvalues.toList())
+
+    val T = symmetricTridiagonalization(A.copy())
+    println("\nHessenberg matrix:")
+    for (row in T.rows()) {
+        println(row.toList())
+    }
+
+    val spA = (0 until n).sumOf { A[it, it] }
+    val q1 = (0 until n).sumOf { T[it, it] }
+
+
+    println("\nChecking SpA = q1: \nSpA = $spA,\n q1 = $q1")
+    println(if (abs(spA - q1) < 1e-4) "Completed" else "Not completed")
+
+    println("\nChecking eigvals:")
+    for (lambd in eigenvalues) {
+        val value = characterPolynom(T, lambd)
+        println("P($lambd) = ${value}")
+    }
+
+}
+
+fun Double.round(decimals: Int): Double {
+    var multiplier = 1.0
+    repeat(decimals) { multiplier *= 10 }
+    return round(this * multiplier) / multiplier
+}

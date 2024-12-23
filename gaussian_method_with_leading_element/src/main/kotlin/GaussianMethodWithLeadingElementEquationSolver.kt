@@ -8,7 +8,7 @@ class GaussianMethodWithLeadingElementEquationSolver(
 
     /// The function, that returns a max
     /// value in the row from selected diagonal element
-    fun getMaxOfRow(columnListMatrix: List<List<Double>>, matrixSize: Int, diagPosition: Int) : ElementPosition {
+    private fun getMaxOfRow(columnListMatrix: List<List<Double>>, matrixSize: Int, diagPosition: Int) : ElementPosition {
         var j = diagPosition + 1
         var maxValue = ElementPosition(diagPosition, diagPosition)
         while (j < matrixSize) {
@@ -33,9 +33,12 @@ class GaussianMethodWithLeadingElementEquationSolver(
         /// we are working with columns
         for (i in 0 until n) {
             for (j in 0 until n) {
-                    columnListMatrix[j][i] = sourceMatrix[i][j]
+                columnListMatrix[j][i] = sourceMatrix[i][j]
             }
         }
+
+        // Create an identity matrix for inverse calculation
+        val inverseMatrix = MutableList(n) { i -> MutableList(n) { if (it == i) 1.0 else 0.0 } }
 
 
         var multipliedTransformation = 1.0
@@ -56,6 +59,11 @@ class GaussianMethodWithLeadingElementEquationSolver(
                 columnListMatrix[maxElementPosition.j] = columnListMatrix[currentDiagPointer]
                 columnListMatrix[currentDiagPointer] = proxyColumn
 
+
+                val proxyInverseColumn = inverseMatrix[maxElementPosition.j]
+                inverseMatrix[maxElementPosition.j] = inverseMatrix[currentDiagPointer]
+                inverseMatrix[currentDiagPointer] = proxyInverseColumn
+
                 /// marking that variable is moved
                 val proxyPos = variablePosition[maxElementPosition.j]
                 variablePosition[maxElementPosition.j] = variablePosition[currentDiagPointer]
@@ -67,6 +75,7 @@ class GaussianMethodWithLeadingElementEquationSolver(
             /// dividing on the leading element
             for (toDividePointer in currentDiagPointer..< n) {
                 columnListMatrix[toDividePointer][currentDiagPointer] = columnListMatrix[toDividePointer][currentDiagPointer] / maxValue
+                inverseMatrix[toDividePointer][currentDiagPointer] = inverseMatrix[toDividePointer][currentDiagPointer] / maxValue
             }
             b[currentDiagPointer] = b[currentDiagPointer] / maxValue
 
@@ -76,6 +85,8 @@ class GaussianMethodWithLeadingElementEquationSolver(
                 val toMultiply = columnListMatrix[currentDiagPointer][kI]
                 for (kJ in currentDiagPointer..< n) {
                     columnListMatrix[kJ][kI] = columnListMatrix[kJ][kI] - toMultiply * columnListMatrix[kJ][currentDiagPointer]
+                    inverseMatrix[kJ][kI] = inverseMatrix[kJ][kI] - toMultiply * inverseMatrix[kJ][currentDiagPointer]
+
                 }
                 b[kI] = b[kI] - toMultiply * b[currentDiagPointer]
             }
@@ -85,6 +96,21 @@ class GaussianMethodWithLeadingElementEquationSolver(
 
 
         }
+
+
+        ///making zeros above the leading elements
+        for (currentDiagPointer in n - 1 downTo 0) {
+            for (kI in currentDiagPointer - 1 downTo 0) {
+                val toMultiply = columnListMatrix[currentDiagPointer][kI]
+                for (kJ in currentDiagPointer downTo 0) {
+                    columnListMatrix[kJ][kI] = columnListMatrix[kJ][kI] - toMultiply * columnListMatrix[kJ][currentDiagPointer]
+                    inverseMatrix[kJ][kI] = inverseMatrix[kJ][kI] - toMultiply * inverseMatrix[kJ][currentDiagPointer]
+                }
+                b[kI] = b[kI] - toMultiply * b[currentDiagPointer]
+
+            }
+        }
+
 
         var diagIndex = n - 1
         val transformedResultValues = MutableList(n) {0.0}
@@ -113,7 +139,16 @@ class GaussianMethodWithLeadingElementEquationSolver(
         /// calculating determinant
         val det = (if (exchangeCount % 2 == 0) 1 else -1) * multipliedTransformation
 
-        return EquationSolution(resultMap, det)
+        // Transpose the inverse matrix back to the original row-major format
+        val transposedInverseMatrix = MutableList(n) { MutableList(n) { 0.0 } }
+        for (i in 0 until n) {
+            for (j in 0 until n) {
+                transposedInverseMatrix[i][j] = inverseMatrix[j][i]
+            }
+        }
+
+
+        return EquationSolution(resultMap, det, transposedInverseMatrix)
     }
 
 }

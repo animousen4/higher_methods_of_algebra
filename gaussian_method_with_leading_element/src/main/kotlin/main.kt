@@ -1,25 +1,6 @@
 
 import kotlin.math.abs
 
-/*
-
-x1 = -1.0259249036759456594
-x2 = 0.26921540663741880809
-x3 = 0.33377083730175757816
-x4 = 0.41900112402095106935
-x5 = 0.50214282616467738727
-x6 = 0.58549551800822071696
-x7 = 0.66882689742906110231
-x8 = 0.75216041137711391926
-x9 = 0.83549389247574536438
-x10 = 0.91882556754137809636
-x11 = 1.00217533578641933
-x12 = 1.0853459782703742592
-x13 = 1.1702897851857837318
-x14 = 1.2376810735477340765
-x15 = 1.4788243830128211578
-
-* */
 fun main(args: Array<String>) {
 
     val matrix : List<List<Double>>
@@ -37,7 +18,7 @@ fun main(args: Array<String>) {
         MutableList(n) {
                 i ->
             i.let {
-                if (i == j) {
+                if (i == j && i != n-1) {
                     return@let diag
                 }
 
@@ -45,13 +26,11 @@ fun main(args: Array<String>) {
                     return@let diag1
                 }
 
-                if (i == 0) {
+
+                if (j == n - 1 && ( i == 0 || i == n - 1)) {
                     return@let diag1
                 }
 
-                if (j == 0) {
-                    return@let diag1
-                }
 
                 return@let 0.0
             }
@@ -76,8 +55,115 @@ fun main(args: Array<String>) {
 
     val result = gaussianMethodSolver.solve()
 
-    println(result.equationSolution)
+    val x = mutableListOf<Double>()
+    for (i in 0 until result.equationSolution.size) {
+        x.add(result.equationSolution[i + 1]!!)
+    }
+
+    println("X = ${result.equationSolution}")
+    val residualVector = resVector(matrix, x, b)
+    println("Residual vector r = b - A*x: $residualVector")
+    val reversedA = result.reverseMatrix
+    println("Reversed A^-1:")
+    printMatrix(reversedA)
+    val residualMatrix = resMatrix(matrix, reversedA)
+    println("Residual matrix R = E - A * A^-1:")
+    printMatrix(residualMatrix)
+    val matrixNorm = matrixNorm(residualMatrix)
+    println("Residual matrix norm ||E - A * A^(-1)|| : $matrixNorm")
     println("Det A = ${result.determinant}")
 
 
 }
+fun printMatrix(matrix : List<List<Double>>) {
+    for (rows in matrix) {
+        for (column in rows) {
+            print("%10.3f".format(column))
+        }
+        println()
+    }
+}
+fun matrixNorm(A: List<List<Double>>): Double {
+    val n = A.size
+    val m = A.firstOrNull()?.size ?: 0 // if the matrix is empty
+    var maxSum = 0.0
+
+    for (j in 0 until m) {
+        var sum = 0.0
+        for (row in A) {
+            sum += abs(row[j])
+        }
+        if (sum > maxSum) {
+            maxSum = sum
+        }
+    }
+    return maxSum
+}
+
+fun multiplyMatrixVector(A: List<List<Double>>, x: List<Double>): List<Double> {
+    val n = A.size
+    val m = A.firstOrNull()?.size ?: 0
+
+    if (m != x.size) {
+        throw IllegalArgumentException("Amount of colums of matrix must correspond to the vector size")
+    }
+
+    val result = MutableList(n) { 0.0 }
+    for (i in 0 until n) {
+        for (j in 0 until m) {
+            result[i] += A[i][j] * x[j]
+        }
+    }
+    return result
+}
+
+fun multiplyMatrices(A: List<List<Double>>, B: List<List<Double>>): List<List<Double>> {
+    val n = A.size
+    val m = A.firstOrNull()?.size ?: 0
+    val p = B.firstOrNull()?.size ?: 0
+    if (m != B.size) {
+        throw IllegalArgumentException("Amount of colums of matrix must correspond to the amount of another matrix rows amount")
+    }
+    val result = MutableList(n) { MutableList(p) { 0.0 } }
+    for (i in 0 until n) {
+        for (j in 0 until p) {
+            for (k in 0 until m) {
+                result[i][j] += A[i][k] * B[k][j]
+            }
+        }
+    }
+    return result
+}
+
+
+fun eMatrix(n: Int): List<List<Double>> {
+    val result = MutableList(n) { MutableList(n) { 0.0 } }
+    for (i in 0 until n) {
+        result[i][i] = 1.0
+    }
+    return result
+}
+fun resVector(A: List<List<Double>>, x: List<Double>, b: List<Double>): List<Double> {
+    val Ax = multiplyMatrixVector(A, x)
+    val n = b.size
+    val r = MutableList(n) { 0.0 }
+    for (i in 0 until n) {
+        r[i] = b[i] - Ax[i]
+    }
+    return r
+}
+
+fun resMatrix(A: List<List<Double>>, invA: List<List<Double>>): List<List<Double>> {
+    val n = A.size
+    val E = eMatrix(n)
+    val AinvA = multiplyMatrices(A, invA)
+    val R = MutableList(n) { MutableList(n) { 0.0 } }
+    for (i in 0 until n) {
+        for (j in 0 until n) {
+            R[i][j] = E[i][j] - AinvA[i][j]
+        }
+    }
+    return R
+}
+
+
